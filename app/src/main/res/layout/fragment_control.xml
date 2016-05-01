@@ -1,0 +1,53 @@
+<LinearLayout
+    xmlns:android="http://schemas.android.com/apk/res/android"
+    android:layout_width="fill_parent"
+    android:layout_height="fill_parent"
+    android:orientation="vertical">
+    <TextView
+	android:id="@+id/gps_text_view"
+	android:layout_width="fill_parent"
+	android:layout_height="wrap_content" />
+    <TextView
+	android:id="@+id/satellites_text_view"
+	android:layout_width="fill_parent"
+	android:layout_height="wrap_content" />
+    <TextView
+	android:id="@+id/locations_text_view"
+	android:layout_width="fill_parent"
+	android:layout_height="wrap_content" />
+    <TextView
+	android:id="@+id/fixed_location_view"
+	android:layout_width="fill_parent"
+	android:layout_height="wrap_content" />
+    <TextView
+	android:id="@+id/temporary_location_view"
+	android:layout_width="fill_parent"
+	android:layout_height="wrap_content" />
+    <TextView
+	android:id="@+id/update_interval_view"
+	android:layout_width="fill_parent"
+	android:layout_height="wrap_content" />
+    <TextView
+	android:id="@+id/update_level_view"
+	android:layout_width="fill_parent"
+	android:layout_height="wrap_content" />
+    <TextView
+	android:id="@+id/clock_text_view"
+	android:layout_width="fill_parent"
+	android:layout_height="wrap_content" />
+    <TextView
+	android:id="@+id/attitude_text_view"
+	android:layout_width="fill_parent"
+	android:layout_height="wrap_content" />
+	  
+  <ListView
+      android:id="@+id/listView1"
+      android:layout_width="fill_parent"
+      android:layout_height="wrap_content" />
+  <!--
+  <ListView
+      android:id="@+id/satsListView"
+      android:layout_width="fill_parent"
+      android:layout_height="wrap_content" />
+  -->
+</LinearLayout>

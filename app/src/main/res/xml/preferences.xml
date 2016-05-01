@@ -1,0 +1,49 @@
+<?xml version="1.0" encoding="utf-8"?>
+<PreferenceScreen xmlns:android="http://schemas.android.com/apk/res/android" >
+
+  <SwitchPreference
+      android:key="enable_saving_battery"
+      android:title="Save battery"
+      android:summary="Enable saving battery"
+      android:switchTextOff="OFF"
+      android:switchTextOn="ON" />
+
+  <ListPreference
+      android:key="@string/pref_sync_interval"
+      android:title="Sync location"
+      android:summary="Enable location data synchronizing and set interval"
+      android:entries="@array/entries_sync_interval"
+      android:entryValues="@array/values_sync_interval"
+      android:dialogTitle="Sync interval" />
+
+  <Preference
+      android:key="@string/pref_sync_location"
+      android:title="Syncronize location data"
+      android:summary="Syncronize location data immediately" />
+
+  <net.xaxxi.locationtracker.preference.AccountPreference
+      android:key="@string/pref_user_name"
+      android:title="Account name"
+      android:summary="no account" />
+
+  <PreferenceCategory android:title="サブカテゴリー" >
+    <CheckBoxPreference
+	android:defaultValue="true"
+	android:key="keybord"
+	android:selectable="true"
+	android:title="Keybord" />
+    <EditTextPreference
+	android:defaultValue="16"
+	android:dialogTitle="Font size (px)"
+	android:key="fontsize"
+	android:inputType="number"
+	android:maxLength="2"
+	android:title="Font size" />
+    <EditTextPreference
+	android:defaultValue="300"
+	android:key="logsize"
+	android:inputType="number"
+	android:maxLength="3"
+	android:title="Log size" android:dialogTitle="Log size (lines)"/>
+  </PreferenceCategory>
+</PreferenceScreen>

@@ -1,0 +1,15 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+  <string-array name="entries_sync_interval">
+    <item>Frequently</item>
+    <item>Sometimes</item>
+    <item>Occasionally</item>
+    <item>Never</item>
+  </string-array>
+  <string-array name="values_sync_interval">
+    <item>3</item>
+    <item>2</item>
+    <item>1</item>
+    <item>0</item>
+  </string-array>
+</resources>
