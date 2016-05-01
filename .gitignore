@@ -30,3 +30,17 @@ proguard/
 
 # Android Studio captures folder
 captures/
+
+# IntelliJ IDEA project files
+.idea/
+*.ipr
+*.iml
+
+# Depended jar directory
+app/libs/
+
+# Emacs
+.#*
+
+# Keys setting file
+app/src/main/res/values/keys.xml
