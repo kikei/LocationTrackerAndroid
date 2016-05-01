@@ -11,6 +11,7 @@ import android.location.GpsSatellite;
 import android.location.GpsStatus;
 import android.location.Location;
 import android.os.Bundle;
+import android.os.Handler;
 
 /**
  * The learning system class for location tracking.
@@ -62,8 +63,10 @@ public class LocationTrackerBrain {
     static final int LPC_NUMBER = 32;
 
     Model mModel;
-    int mLastSavedSegment;
     LinearPredictiveCoding mLPC;
+
+    long mGpsLastStarted = 0L;
+    long mGpsLastStopped = 0L;
 
     /**
      * Constructs a new instance of {@link #LocationTrackerBrain}.
@@ -86,8 +89,6 @@ public class LocationTrackerBrain {
         mCurrentTime = -1L;
         mCurrentLocation = null;
 
-        mLastSavedSegment = -1;
-
         if (!mModel.isScoresInitilized()) {
             initializeDb();
         }
@@ -95,6 +96,8 @@ public class LocationTrackerBrain {
         mLPC = new LinearPredictiveCoding(LPC_NUMBER, scores);
 
         updateLocationUpdatesInterval();
+
+        startScoreKeeper();
     }
 
     /**
@@ -156,6 +159,12 @@ public class LocationTrackerBrain {
         // android.util.Log.d(TAG, "commitGpsStatusChanged: event=" + event);
 
         switch (event) {
+        case GpsStatus.GPS_EVENT_STARTED:
+            mGpsLastStarted = Utilities.getTimeInMillis();
+            break;
+        case GpsStatus.GPS_EVENT_STOPPED:
+            mGpsLastStopped = Utilities.getTimeInMillis();
+            break;
         case GpsStatus.GPS_EVENT_SATELLITE_STATUS:
             Iterable<GpsSatellite> sats = status.getSatellites();
             boolean gpsAvailable = true;
@@ -280,7 +289,8 @@ public class LocationTrackerBrain {
         double score1 = calcScore(score0, score);
 
         android.util.Log.d(TAG,
-                           "new score; score0=" + score0 + ", score1=" + score1);
+                           "new score, score=" + score +
+                           ", score0=" + score0 + ", score1=" + score1);
 
         scores[segment] = score1;
         mModel.putScore(segment, score1);
@@ -316,15 +326,10 @@ public class LocationTrackerBrain {
         Calendar calendar = Utilities.getCalendarByTimeInMillis(time);
         int seg = getLearningSegmentNumber(calendar);
 
-        android.util.Log.d(TAG,
-                           "mLastSavedSegment=" + mLastSavedSegment +
-                           ", seg=" + seg);
-        
         long from = Utilities.getTimeInMillis(getWeekStartOf(calendar));
 
         SortedMap<Long, Location> latests = mFixedLocations.tailMap(from, true);
-        double score =
-            (double)latests.size() / LEARNING_SEGMENT_DURATION_MINUTE;
+        double score = getScore(latests.size());
         mNewScore = score;
 
         android.util.Log.d(TAG,
@@ -333,15 +338,7 @@ public class LocationTrackerBrain {
                            ", calendar=" + calendar +
                            ", from=" + from +
                            ", score=" + score +
-                           ", seg=" + seg +
-                           ", mLastSavedSegment=" + mLastSavedSegment);
-
-        // Save only when a segment was over
-        if (mLastSavedSegment != seg) {
-            if (mLastSavedSegment >= 0) 
-                updateScore(mLastSavedSegment, score);
-            mLastSavedSegment = seg;
-        }
+                           ", seg=" + seg);
 
         int lastInterval = mUpdateInterval;
         UpdateLevel lastLevel = mUpdateLevel;
@@ -353,6 +350,95 @@ public class LocationTrackerBrain {
                 .onRequestedChangeLocationUpdates(mUpdateLevel, mUpdateInterval);
     }
 
+    private void startScoreKeeper() {
+        Handler handler = new Handler();
+        Calendar calendar = Utilities.getCalendar();
+        long now = Utilities.getTimeInMillis(calendar);
+        int seg = getLearningSegmentNumber(calendar);
+        long to = getStartTimeOfSegment(calendar, seg + 1);
+        handler.postDelayed(new ScoreKeeperTask(calendar, seg), to - now);
+    }
+
+    private class ScoreKeeperTask implements Runnable {
+        final Calendar mCalendar;
+        final int mSegment;
+        
+        /**
+         * Create ScoreKeeperTask instance.
+         *
+         * @param calendar current time
+         * @param segment target segment to update
+         */
+        public ScoreKeeperTask(Calendar calendar, int segment) {
+            mCalendar = calendar;
+            mSegment = segment;
+        }
+
+        /**
+         * Check if gps has runned during the segment.
+         *
+         * <p>
+         * This function checks if gps is running now
+         * (the time gps started is later than that gps stopped), or
+         * gps was stopped in current segment (the time gps stopped is later
+         * than that current segment begins).
+         * </p>
+         *
+         * @return true if gps has runned.
+         */
+        private boolean toUpdateScore() {
+            long segmentStart = getStartTimeOfSegment(mCalendar, mSegment);
+            return
+                mGpsLastStopped < mGpsLastStarted ||
+                segmentStart < mGpsLastStopped;
+        }
+        
+        @Override
+        public void run() {
+            boolean update = toUpdateScore();
+            
+            long segmentStart = getStartTimeOfSegment(mCalendar, mSegment);
+            android.util.Log.d(TAG, "ScoreKeeperTask run" +
+                               ", update=" + update +
+                               ", segment=" + mSegment +
+                               ", last gps start=" + mGpsLastStarted +
+                               ", last gps stop=" + mGpsLastStopped +
+                               ", segment start=" + segmentStart);
+            if (update) {
+                SortedMap<Long, Location> latests =
+                    mFixedLocations.tailMap(segmentStart, true);
+                double score = getScore(latests.size());
+                mNewScore = score;
+                updateScore(mSegment, score);
+
+                int lastInterval = mUpdateInterval;
+                UpdateLevel lastLevel = mUpdateLevel;
+                updateLocationUpdatesInterval();
+                if (mUpdateInterval != lastInterval ||
+                    mUpdateLevel    != lastLevel) 
+                    // Request LocationUpdates control
+                    mBrainListener
+                        .onRequestedChangeLocationUpdates(mUpdateLevel,
+                                                          mUpdateInterval);
+            }
+            try {
+                Thread.sleep(LEARNING_SEGMENT_DURATION / 10L);
+            } catch (InterruptedException e) {
+                android.util.Log.w(TAG, "scorekeeper interrupted");
+            }
+            startScoreKeeper();
+        }
+    }
+
+    /**
+     * Return score from the number of locations.
+     *
+     * @param size the number of fixed locations
+     * @return score calculated score
+     */
+    protected static double getScore(int size) {
+        return (double)size / LEARNING_SEGMENT_DURATION_MINUTE;
+    }
 
     /**
      * Return new score calculated by old and new scores.
@@ -407,5 +493,12 @@ public class LocationTrackerBrain {
                                "BUG: tbase > tcale");
             return -1;
         }
+    }
+
+    protected static long getStartTimeOfSegment(Calendar calendar,
+                                                int segment) {
+        long weekStart = Utilities.getTimeInMillis(getWeekStartOf(calendar));
+        long segStart = weekStart + segment * LEARNING_SEGMENT_DURATION;
+        return segStart;
     }
 }
