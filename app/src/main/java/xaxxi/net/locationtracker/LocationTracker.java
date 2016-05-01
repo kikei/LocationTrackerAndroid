@@ -177,6 +177,12 @@ public class LocationTracker {
         Entry<Long, Location> ent = mBrain.getPresumedLocation();
         if (ent != null)
             sendMessage(MessageCode.LOCATION_TEMPORARILY_UPDATED, ent);
+
+        sendMessage(MessageCode.LOCATION_UPDATE_LEVEL_CHANGED,
+                    mBrain.getUpdateLevel().toString());
+        sendMessage(MessageCode.LOCATION_UPDATE_INTERVAL_CHANGED,
+                    Integer.valueOf(mBrain.getUpdateInterval()));
+
     }
 
     private void startLocationUpdates() {

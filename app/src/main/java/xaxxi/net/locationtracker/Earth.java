@@ -68,7 +68,7 @@ public class Earth {
      */
     public static String degreeToDMS(double deg) {
         deg = Math.abs(deg);
-        int dd = (oint)Math.floor(deg);
+        int dd = (int)Math.floor(deg);
         int mm = (int)Math.floor((deg - dd) * 60.0);
         double ss = ((deg - dd) - (mm / 60.0)) * 3600.0;
         return String.format("%02d°%02d' %02.2f''", dd, mm, ss);
