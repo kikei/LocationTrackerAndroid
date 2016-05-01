@@ -74,7 +74,7 @@ public class LocationTracker {
         if (mSensorOperator != null)
             mSensorOperator.setListener(sensorOperatorListener);
 
-        mLastSynchronized = 0L;
+        mLastSynchronized = Utilities.getTimeInMillis();
         mToCallListener = true;
         mStatus = new StatusManager();
         mClient = LocationTrackerClient.getInstance(mModel);
@@ -232,6 +232,10 @@ public class LocationTracker {
         mModel.putLocationData(time, location);
 
         // Sync locations
+        syncronizeLocations();
+    }
+
+    private boolean syncronizeLocations() { 
         Long interval = mModel.getSyncInterval();
         if (interval != null) {
             long now = Utilities.getTimeInMillis();
