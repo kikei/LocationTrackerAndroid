@@ -77,6 +77,7 @@ public class LocationTrackerServiceManager {
     private ServiceConnection mServiceConnection = new ServiceConnection() {
             public void onServiceConnected(ComponentName className,
                                            IBinder service) {
+                android.util.Log.d(TAG, "onServiceConnected");
                 mLocationTrackerService =
                     ((LocationTrackerService.LocalBinder)service).getService();
                 callServiceBoundListeners();

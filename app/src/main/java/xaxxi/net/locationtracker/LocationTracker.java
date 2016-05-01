@@ -235,7 +235,7 @@ public class LocationTracker {
         syncronizeLocations();
     }
 
-    private boolean syncronizeLocations() { 
+    private void syncronizeLocations() { 
         Long interval = mModel.getSyncInterval();
         if (interval != null) {
             long now = Utilities.getTimeInMillis();
@@ -250,8 +250,9 @@ public class LocationTracker {
         Message msg = Message.obtain();
         msg.what = code;
         msg.obj = obj;
-        // android.util.Log.d(TAG, "sendMessage, code=" + code +
-        //                    ", handler=" + mHandler);
+        android.util.Log.d(TAG, "sendMessage, code=" + code +
+                           ", mToCallListener=" + mToCallListener +
+                           ", handler=" + mHandler);
         if (mHandler != null && mToCallListener)
             mHandler.sendMessage(msg);
     }

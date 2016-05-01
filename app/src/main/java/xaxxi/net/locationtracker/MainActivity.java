@@ -153,9 +153,12 @@ public class MainActivity
 
     @Override
     public void onStart() {
-
         super.onStart();
-        android.util.Log.d("LocationTracker.MainActivity", "onStart");
+        
+        android.util.Log.d(TAG,
+                           "onStart" +
+                           ", service bound=" +
+                           mLocationTrackerServiceManager.isBoundService());
 
         LocationManager manager =
             (LocationManager)getSystemService(Context.LOCATION_SERVICE);
@@ -172,6 +175,8 @@ public class MainActivity
                         public void
                             onBoundService(LocationTrackerService service) {
                             service.setHandler(mHandler);
+                            service.switchToCallListener(true);
+                            service.requestLocations();
                         }
                     });
             mLocationTrackerServiceManager.bindService(MainActivity.this);
@@ -530,8 +535,8 @@ public class MainActivity
     class MainHandler extends Handler {
         @Override
         public void handleMessage(Message msg) {
-            // android.util.Log.d(TAG, "MainHandler.handleMessage" +
-            //                    ", msg.what=" + msg.what);
+            android.util.Log.d(TAG, "MainHandler.handleMessage" +
+                               ", msg.what=" + msg.what);
             switch (msg.what) {
             case MessageCode.LOCATION_UPDATED:
                 onLocationUpdated((TreeMap<Long, Location>)msg.obj);
