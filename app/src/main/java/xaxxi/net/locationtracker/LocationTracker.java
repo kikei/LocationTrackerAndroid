@@ -205,14 +205,17 @@ public class LocationTracker {
         else
             mStatus.runCalmly();
 
+        if (!mStatus.isCalm())
+            mSensorOperator.stop();
+        else
+            mSensorOperator.start();
+
         mLocationManager.
             requestLocationUpdates(LocationManager.GPS_PROVIDER,
                                    interval, // 最小時間間隔 [msec]
                                    MIN_GPS_DISTANCE, // 最小距離間隔 [m]
                                    locationListener);
         mLocationManager.addGpsStatusListener(gpsStatusListener);
-
-        mSensorOperator.start();
     }
 
     private void stopLocationUpdates() {
@@ -250,9 +253,9 @@ public class LocationTracker {
         Message msg = Message.obtain();
         msg.what = code;
         msg.obj = obj;
-        android.util.Log.d(TAG, "sendMessage, code=" + code +
-                           ", mToCallListener=" + mToCallListener +
-                           ", handler=" + mHandler);
+        // android.util.Log.d(TAG, "sendMessage, code=" + code +
+        //                    ", mToCallListener=" + mToCallListener +
+        //                    ", handler=" + mHandler);
         if (mHandler != null && mToCallListener)
             mHandler.sendMessage(msg);
     }

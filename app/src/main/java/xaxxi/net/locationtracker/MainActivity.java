@@ -535,8 +535,8 @@ public class MainActivity
     class MainHandler extends Handler {
         @Override
         public void handleMessage(Message msg) {
-            android.util.Log.d(TAG, "MainHandler.handleMessage" +
-                               ", msg.what=" + msg.what);
+            // android.util.Log.d(TAG, "MainHandler.handleMessage" +
+            //                    ", msg.what=" + msg.what);
             switch (msg.what) {
             case MessageCode.LOCATION_UPDATED:
                 onLocationUpdated((TreeMap<Long, Location>)msg.obj);
