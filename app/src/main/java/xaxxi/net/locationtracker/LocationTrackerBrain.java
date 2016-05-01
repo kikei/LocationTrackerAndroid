@@ -39,6 +39,8 @@ public class LocationTrackerBrain {
     static final int MAX_UPDATE_INTERVAL = 10 * 60 * 1000; // 10 min
     static final int MIN_UPDATE_INTERVAL = 1  * 60 * 1000; // 1  min
 
+    static final int THRESHOLD_AVAILABLE_SATELLITES = 3;
+
     BrainListener mBrainListener;
 
     LocationCollector mCollector;
@@ -68,6 +70,8 @@ public class LocationTrackerBrain {
     long mGpsLastStarted = 0L;
     long mGpsLastStopped = 0L;
 
+    int mUsedSatellites = 0;
+    
     /**
      * Constructs a new instance of {@link #LocationTrackerBrain}.
      *
@@ -130,6 +134,13 @@ public class LocationTrackerBrain {
     public void commitLocation(long time, Location location) {
         locationPresumed(time, location);
 
+        // Ignore new location if not gps condition is reasonable
+        if (!isGpsAvailable()) {
+            android.util.Log.d(TAG, "commitLocation, but ignored" +
+                               ", satellites=" + mUsedSatellites);
+            return;
+        }
+
         boolean collected = mCollector.collect(time, location);
         if (!collected) {
             // Out of collection 
@@ -141,6 +152,11 @@ public class LocationTrackerBrain {
             // New location is collected
             android.util.Log.d(TAG, "new location collected");
         }
+    }
+
+    protected boolean isGpsAvailable() {
+        // NG if not sufficient number of satellites are used
+        return mUsedSatellites > THRESHOLD_AVAILABLE_SATELLITES;
     }
 
     public void commitGpsProviderStatusChanged(String provider, int status,
@@ -176,6 +192,8 @@ public class LocationTrackerBrain {
                 ++satN;
                 if (sat.usedInFix()) ++satUsed;
             }
+            mUsedSatellites = satUsed;
+            
             if (satUsed == 0) gpsAvailable = false;
 
             if (!gpsAvailable && mCollector.size() > 0) {
@@ -250,15 +268,11 @@ public class LocationTrackerBrain {
     protected void commit(long time, TreeMap<Long, Location> locations) {
     }
     */
-
     protected double predictNextScore() {
         Calendar calendar = Utilities.getCalendar();
         int seg = getLearningSegmentNumber(calendar);
 
         double[] scores = mModel.getAllScores();
-
-        android.util.Log.d(TAG,
-                           "predictNextScore seg=" + seg);
 
         double[] data = new double[LPC_NUMBER];
         if (seg >= LPC_NUMBER) {
@@ -271,6 +285,11 @@ public class LocationTrackerBrain {
                 data[LPC_NUMBER - seg + i] = scores[i];
         }
         double next = mLPC.predictNext(data);
+
+        android.util.Log.d(TAG,
+                           "predictNextScore seg=" + seg +
+                           ", scores[seg]=" + scores[seg] +
+                           ", next=" + next);
 
         return Math.max(next, scores[seg]);
     }
@@ -362,7 +381,6 @@ public class LocationTrackerBrain {
     private class ScoreKeeperTask implements Runnable {
         final Calendar mCalendar;
         final int mSegment;
-        
         /**
          * Create ScoreKeeperTask instance.
          *
