@@ -452,6 +452,15 @@ public class MainActivity
             f.updateUpdateLevel(level);
         }
     }
+
+    private void onLocationTrackerStatusChanged(String status) {
+        ControlFragment f = getControlFragment();
+        if (f != null) {
+            // f.addMessage("onLocationUpdateLevelChanged" +
+            //              ", level=" + level);
+            f.updateLocationTrackerStatus(status);
+        }
+    }
         
     private void onProviderEnabled(String provider) {
         ControlFragment cf = getControlFragment();
@@ -552,6 +561,8 @@ public class MainActivity
             case MessageCode.LOCATION_UPDATE_LEVEL_CHANGED:
                 onLocationUpdateLevelChanged((String)msg.obj);
                 break;
+            case MessageCode.LOCATION_TRACKER_STATUS_CHANGED:
+                onLocationTrackerStatusChanged((String)msg.obj);
             case MessageCode.PROVIDER_ENABLED:
                 onProviderEnabled((String)msg.obj);
                 break;

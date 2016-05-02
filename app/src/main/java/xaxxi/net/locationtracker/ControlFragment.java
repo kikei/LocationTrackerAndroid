@@ -32,6 +32,7 @@ public class ControlFragment extends Fragment {
     TextView mTemporaryLocationTextView;
     TextView mUpdateIntervalView;
     TextView mUpdateLevelView;
+    TextView mLocationTrackerStatusView;
     TextView mClockTextView;
     TextView mAttiTextView;
 
@@ -61,6 +62,8 @@ public class ControlFragment extends Fragment {
             (TextView)v.findViewById(R.id.update_interval_view);
         mUpdateLevelView =
             (TextView)v.findViewById(R.id.update_level_view);
+        mLocationTrackerStatusView =
+            (TextView)v.findViewById(R.id.location_tracker_status_view);
         mClockTextView = (TextView)v.findViewById(R.id.clock_text_view);
         mAttiTextView = (TextView)v.findViewById(R.id.attitude_text_view);
 
@@ -70,6 +73,7 @@ public class ControlFragment extends Fragment {
         mTemporaryLocationTextView.setText("Current Location: -");
         mUpdateIntervalView.setText("Update interval: -");
         mUpdateLevelView.setText("Update level: -");
+        updateLocationTrackerStatus();
         mClockTextView.setText("22h10m52s tracking now");
         mAttiTextView.setText("Attitude: -");
         
@@ -180,6 +184,17 @@ public class ControlFragment extends Fragment {
     public void updateUpdateLevel(String level) {
         if (mUpdateLevelView != null)
             mUpdateLevelView.setText("Update level: " + level);
+    }
+
+    public void updateLocationTrackerStatus() {
+        if (mLocationTrackerStatusView != null)
+            mLocationTrackerStatusView.setText("LocationTracker status: -");
+    }
+    
+    public void updateLocationTrackerStatus(String status) {
+        if (mLocationTrackerStatusView != null)
+            mLocationTrackerStatusView.setText("LocationTracker status: " +
+                                               status);
     }
 
     private void updateSatellitesView() {

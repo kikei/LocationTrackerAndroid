@@ -32,6 +32,10 @@
 	android:layout_width="fill_parent"
 	android:layout_height="wrap_content" />
     <TextView
+	android:id="@+id/location_tracker_status_view"
+	android:layout_width="fill_parent"
+	android:layout_height="wrap_content" />    
+    <TextView
 	android:id="@+id/clock_text_view"
 	android:layout_width="fill_parent"
 	android:layout_height="wrap_content" />

@@ -38,8 +38,8 @@ public class LocationTrackerBrain {
 
     static final int MAX_UPDATE_INTERVAL = 10 * 60 * 1000; // 10 min
     static final int MIN_UPDATE_INTERVAL = 1  * 60 * 1000; // 1  min
-
     static final int THRESHOLD_AVAILABLE_SATELLITES = 3;
+    static final long THRESHOLD_SATELLITES_LOST_TIME = 1 * 60 * 1000; // 1 min
 
     BrainListener mBrainListener;
 
@@ -59,7 +59,7 @@ public class LocationTrackerBrain {
         (int)(60 * 24 * 7 / LEARNING_SEGMENT_DURATION_MINUTE);
 
     // The score used at database initialization
-    static final double PRESET_SCORE = 2.0;
+    static final double PRESET_SCORE = 1.0;
 
     // LPC coefficient.
     static final int LPC_NUMBER = 32;
@@ -69,7 +69,7 @@ public class LocationTrackerBrain {
 
     long mGpsLastStarted = 0L;
     long mGpsLastStopped = 0L;
-
+    long mGpsLastLost = 0L;
     int mUsedSatellites = 0;
     
     /**
@@ -173,13 +173,14 @@ public class LocationTrackerBrain {
      */
     public void commitGpsStatusChanged(int event, GpsStatus status) {
         // android.util.Log.d(TAG, "commitGpsStatusChanged: event=" + event);
-
+        long now = Utilities.getTimeInMillis();
+        
         switch (event) {
         case GpsStatus.GPS_EVENT_STARTED:
-            mGpsLastStarted = Utilities.getTimeInMillis();
+            mGpsLastStarted = now;
             break;
         case GpsStatus.GPS_EVENT_STOPPED:
-            mGpsLastStopped = Utilities.getTimeInMillis();
+            mGpsLastStopped = now;
             break;
         case GpsStatus.GPS_EVENT_SATELLITE_STATUS:
             Iterable<GpsSatellite> sats = status.getSatellites();
@@ -193,15 +194,19 @@ public class LocationTrackerBrain {
                 if (sat.usedInFix()) ++satUsed;
             }
             mUsedSatellites = satUsed;
-            
-            if (satUsed == 0) gpsAvailable = false;
 
-            if (!gpsAvailable && mCollector.size() > 0) {
+            if (satUsed != 0) {
+                mGpsLastLost = 0L;
+            } else if (mGpsLastLost == 0L) {
+                mGpsLastLost = now;
+            } else if (now - mGpsLastLost > THRESHOLD_SATELLITES_LOST_TIME &&
+                       mCollector.size() > 0) {
                 android.util.Log.d(TAG,
-                                   "current location fixed; satellites lost");
+                                   "location fixed; satellites lost");
                 Entry<Long, Location> summary = mCollector.getSummary();
                 mCollector.flush();
                 locationFixed(summary.getKey(), summary.getValue());
+                mGpsLastLost = 0L;
             }
         }
     }

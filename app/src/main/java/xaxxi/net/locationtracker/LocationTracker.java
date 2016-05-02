@@ -76,9 +76,11 @@ public class LocationTracker {
 
         mLastSynchronized = Utilities.getTimeInMillis();
         mToCallListener = true;
+        
         mStatus = new StatusManager();
-        mClient = LocationTrackerClient.getInstance(mModel);
+        mStatus.setListener(statusChangedListener);
 
+        mClient = LocationTrackerClient.getInstance(mModel);
         mBrain = new LocationTrackerBrain(mModel, brainListener);
     }
     
@@ -492,6 +494,15 @@ public class LocationTracker {
             lazySwitch = null;
         }
     }
+
+    private StatusChangedListener statusChangedListener =
+        new StatusChangedListener() {
+            @Override
+            public void onStatusChanged(Status status) {
+                sendMessage(MessageCode.LOCATION_TRACKER_STATUS_CHANGED,
+                            status.toString());
+            }
+        };
     
     enum Status {
         New,
@@ -509,6 +520,10 @@ public class LocationTracker {
         Off
     }
 
+    interface StatusChangedListener {
+        public void onStatusChanged(Status status);
+    }
+    
     /**
      * LocationTracker status manager.
      * 
@@ -517,11 +532,17 @@ public class LocationTracker {
      * </p>
      */
     private class StatusManager {
+
         
         volatile Status mStatus;
+        StatusChangedListener mListener;
         
         public StatusManager() {
             mStatus = Status.New;
+        }
+
+        public void setListener(StatusChangedListener listener) {
+            mListener = listener;
         }
 
         public boolean isStarted() {
@@ -594,6 +615,7 @@ public class LocationTracker {
         private void setStatus(Status status) {
             android.util.Log.d(TAG, "StatusManager.setStatus status=" + status);
             mStatus = status;
+            if (mListener != null) mListener.onStatusChanged(status);
         }
     }
 }
